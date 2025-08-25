@@ -1,0 +1,39 @@
+{
+    "hosts": [
+        {
+            "pattern": "json.example",
+            "status": 301,
+            "to_host": "newjson.example",
+            "exact": {
+                "/old": "/new",
+                "/docs": "/documentation"
+            },
+            "prefix": [
+                {
+                    "from": "/blog/",
+                    "to": "/news/"
+                }
+            ],
+            "regex": [
+                {
+                    "pattern": "^/u/([0-9]+)$",
+                    "to": "/users/$1"
+                },
+                {
+                    "pattern": "^/r/(.*)$",
+                    "to": "https://json-abs.example/$1"
+                }
+            ]
+        },
+        {
+            "pattern": "*.shop.json.example",
+            "to_host": "storejson.example",
+            "prefix": [
+                {
+                    "from": "/products/",
+                    "to": "/catalog/"
+                }
+            ]
+        }
+    ]
+}

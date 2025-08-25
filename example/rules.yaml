@@ -1,0 +1,26 @@
+hosts:
+  - pattern: yaml.example
+    # no host-level status here -> falls back to global 308 from Caddyfile
+    to_host: newyaml.example
+
+    exact:
+      /old: /new
+      /about: /company
+
+    prefix:
+      - from: "/blog/"
+        to:   "/news/"
+      - from: "/blog/2024/"
+        to:   "/archive/2024/"
+
+    regex:
+      - pattern: "^/u/([0-9]+)$"
+        to: "/users/$1"
+      - pattern: "^/r/(.*)$"
+        to: "https://yaml-abs.example/$1"
+
+  - pattern: "*.legacy.yaml.example"
+    to_host: portal-yaml.example
+    prefix:
+      - from: "/app/"
+        to:   "/v2/"

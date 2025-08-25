@@ -4,6 +4,8 @@
 package redirector
 
 import (
+	"strings"
+
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
@@ -21,6 +23,10 @@ func (r *Redirector) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 	for d.Next() {
 		for d.NextBlock(0) {
 			switch d.Val() {
+			case "rules_file":
+				if err := parseRulesFile(d, r); err != nil {
+					return err
+				}
 			case "host":
 				if err := parseHost(d, r); err != nil {
 					return err
@@ -34,6 +40,17 @@ func (r *Redirector) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 			}
 		}
 	}
+	return nil
+}
+
+func parseRulesFile(d *caddyfile.Dispenser, r *Redirector) error {
+	var p, fmt string
+	if !d.Args(&p) {
+		return d.ArgErr()
+	}
+
+	_ = d.Args(&fmt)
+	r.RulesFiles = append(r.RulesFiles, RulesFile{Path: p, Format: strings.ToLower(fmt)})
 	return nil
 }
 

@@ -1,0 +1,36 @@
+:8080
+
+route {
+	# Simple health endpoint for quick smoke tests
+	respond /health "ok"
+
+	redirector {
+		# Global default status (used if a host doesn't override it)
+		status 308
+
+		# Load external rule files (relative to this Caddyfile directory)
+		rules_file example/rules.json
+		rules_file example/rules.yaml
+		rules_file example/rules.toml
+
+		# Inline example host (overrides and mixes with external rules)
+		host extra.example {
+			status 308
+			to_host new.example
+
+			# exact path move
+			exact  /x     /y
+
+			# prefix move (longest wins if multiple)
+			prefix /old/  /new/
+
+			# regex with capture group
+			regex  ^/u/([0-9]+)$  /users/$1
+		}
+
+		# Catch-all fallback: simple local redirect that does not change host
+		host * {
+			exact /ping /health
+		}
+	}
+}

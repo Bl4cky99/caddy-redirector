@@ -33,6 +33,12 @@ func (r *Redirector) Provision(caddy.Context) error {
 		r.DefaultCode = http.StatusPermanentRedirect
 	}
 
+	if len(r.RulesFiles) > 0 {
+		if err := r.loadExternalRules(); err != nil {
+			return err
+		}
+	}
+
 	compiled = make([]compiledHostBlock, 0, len(r.Hosts))
 	for _, hb := range r.Hosts {
 		ch := compiledHostBlock{

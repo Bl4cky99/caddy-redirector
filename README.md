@@ -10,6 +10,8 @@
         A fast, configurable Caddy <b>HTTP middleware</b> for granular host and path migrations.   
         <br/>
         Designed for large redirect sets after domain or app restructures, with a clean Caddyfile syntax and production-friendly behavior.
+        <br/>
+        Redirect rules can be configured flexibly, either through the Caddyfile or via external config files.
         <br/><br/>
         <a href="https://github.com/Bl4cky99/caddy-redirector/issues/new?template=bug_report.yml">Report Bug</a>
         &middot;
@@ -41,6 +43,7 @@
       <li><a href="#precedence">Precedence</a></li>
     </ul>
   </li>
+  <li><a href="#configuration-yaml--json--toml">Configuration (yaml, json, toml)</a></li>
   <li><a href="#examples">Examples</a>
     <ul>
       <li><a href="#ex-migrate-exact">Migrate one host to another, lots of exact paths</a></li>
@@ -72,6 +75,8 @@
   - `exact` (path = path)
   - `prefix` (longest prefix wins)
   - `regex` (Go RE2; `$1`, `$2`, … captures)
+- **Multiple config formats**: rules can be defined not only in the Caddyfile, but also in external YAML, JSON, or TOML files.
+
 - **Configurable status code**: global default and host-level override (301, 307 or 308).
 - **Absolute vs relative targets**:
   - Absolute targets (`https://…`) are used verbatim.
@@ -272,6 +277,21 @@ redirector {
 
 ---
 
+## <span id="configuration-formats">Configuration (YAML / JSON / TOML)</span>
+
+In addition to the [Caddyfile configuration](#configuration), rules can also be defined in structured formats:
+
+- **YAML** ([example/rules.yaml](example/rules.yaml))  
+- **JSON** ([example/rules.json](example/rules.json))  
+- **TOML** ([example/rules.toml](example/rules.toml))  
+
+The behavior is identical to the Caddyfile variant – only the format differs.  
+This allows redirect rules to be managed outside of the Caddyfile if preferred.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
 ## <span id="examples">Examples</span>
 
 ### <span id="ex-migrate-exact">1) Migrate one host to another, lots of exact paths</span>
@@ -412,7 +432,9 @@ Project layout:
 .
 ├─ model.go              # data types: HostBlock, PrefixRule, RegexRule, compiledHostBlock, etc.
 ├─ parse_caddyfile.go    # Caddyfile parsing (UnmarshalCaddyfile), directive registration
+├─ parse_config.go       # Config parsing for external redirect rule files (json, yaml, toml)
 ├─ redirector.go         # module wiring, Provision/Validate/ServeHTTP, core logic
+├─ bench_test.go         # simple benchmark test for different redirect methods
 └─ go.mod
 ```
 
@@ -521,7 +543,6 @@ BenchmarkRegex_Miss_1e2-8 ~3,100 ns/op 0 B/op 0 allocs/op
 ## <span id="extending">Extending the module (ideas)</span>
 
 - **Query handling**: `preserve_query on|off` at rule or host level; or `append_query key=value`.
-- **External rule files** (JSON/TOML/YAML) loaded at provision time.
 - **Metrics/logging**: counters per rule, structured logs with rule IDs.
 - **Radix tree** for prefix rules when you have very large sets.
 - **Dual-stack host matching**: treat `Host: example.com:PORT` gracefully in dev (normalize port).

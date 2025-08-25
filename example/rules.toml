@@ -1,0 +1,31 @@
+# Host: toml.example — host-level status override (301)
+[[hosts]]
+pattern = "toml.example"
+status  = 301
+to_host = "newtoml.example"
+
+[hosts.exact]
+"/old"  = "/new"
+"/help" = "/support"
+
+[[hosts.prefix]]
+from = "/blog/"
+to   = "/news/"
+
+[[hosts.regex]]
+pattern = "^/u/([0-9]+)$"
+to      = "/users/$1"
+
+# Absolute target ignores to_host (stays as-is)
+[[hosts.regex]]
+pattern = "^/r/(.*)$"
+to      = "https://toml-abs.example/$1"
+
+# Wildcard example: any subdomain of *.shop.toml.example
+[[hosts]]
+pattern = "*.shop.toml.example"
+to_host = "storetoml.example"
+
+[[hosts.prefix]]
+from = "/products/"
+to   = "/catalog/"
