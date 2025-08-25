@@ -90,103 +90,106 @@ func (r *Redirector) ServeHTTP(w http.ResponseWriter, req *http.Request, next ca
 	host := strings.ToLower(req.Host)
 	path := req.URL.Path
 
-	var block *compiledHostBlock
-	for i := range compiled {
-		ch := &compiled[i]
-		switch {
-		case ch.exactHost != "" && host == ch.exactHost:
-			block = ch
-			goto FOUND
-		case ch.suffix != "" && strings.HasSuffix(host, ch.suffix):
-			block = ch
-			goto FOUND
-		case ch.matchAll:
-			if block == nil {
-				block = ch
-			}
-		}
-	}
-
-FOUND:
+	block := findHostBlock(host)
 	if block != nil {
 		if to, ok := block.exactPaths[path]; ok {
-			target := to
-			if block.toHost != "" {
-				scheme := "https"
-				if req.TLS == nil && req.Header.Get("X-Forwarded-Proto") == "http" {
-					scheme = "http"
-				}
-
-				if !strings.HasPrefix(to, "http://") && !strings.HasPrefix(to, "https://") {
-					if !strings.HasPrefix(to, "/") {
-						to = "/" + to
-					}
-					target = scheme + "://" + block.toHost + to
-				} else {
-					target = to
-				}
-			}
-			http.Redirect(w, req, target, block.status)
-			return nil
+			return doRedirect(w, req, buildTarget(block.toHost, to, req), block.status)
 		}
 
-		if block.prefixBuckets != nil {
-			bk := bucketKey(path)
-			if lst := block.prefixBuckets[bk]; len(lst) > 0 {
-				for _, pr := range lst {
-					if strings.HasPrefix(path, pr.From) {
-						rest := path[len(pr.From):]
-						to := pr.To
-						if !strings.HasSuffix(to, "/") && rest != "" && !strings.HasPrefix(rest, "/") {
-							to += "/"
-						}
-						newPath := to + rest
-						target := newPath
-						if block.toHost != "" && !strings.HasPrefix(newPath, "http://") && !strings.HasPrefix(newPath, "https://") {
-							scheme := "https"
-							if req.TLS == nil && strings.EqualFold(req.Header.Get("X-Forwarded-Proto"), "http") {
-								scheme = "http"
-							}
-							target = scheme + "://" + block.toHost + newPath
-						}
-						http.Redirect(w, req, target, block.status)
-						return nil
-					}
-				}
-			}
+		if target, ok := matchPrefix(block, path, req); ok {
+			return doRedirect(w, req, target, block.status)
 		}
 
-		if len(block.regexRules) > 0 {
-			for _, rr := range block.regexRules {
-				if rr.re.MatchString(path) {
-					out := rr.re.ReplaceAllString(path, rr.to)
-					target := out
-
-					if !strings.HasPrefix(out, "http://") && !strings.HasPrefix(out, "https://") {
-						if block.toHost != "" {
-							scheme := "https"
-							if req.TLS == nil && req.Header.Get("X-Forwarded-Proto") == "http" {
-								scheme = "http"
-							}
-
-							if !strings.HasPrefix(out, "/") {
-								out = "/" + out
-							}
-
-							target = scheme + "://" + block.toHost + out
-						} else {
-							target = out
-						}
-					}
-
-					http.Redirect(w, req, target, block.status)
-					return nil
-				}
-			}
+		if target, ok := matchRegex(block, path, req); ok {
+			return doRedirect(w, req, target, block.status)
 		}
 	}
 
 	return next.ServeHTTP(w, req)
+}
+
+func findHostBlock(host string) *compiledHostBlock {
+	var fallback *compiledHostBlock
+	for i := range compiled {
+		ch := &compiled[i]
+		switch {
+		case ch.exactHost != "" && host == ch.exactHost:
+			return ch
+		case ch.suffix != "" && strings.HasSuffix(host, ch.suffix):
+			return ch
+		case ch.matchAll:
+			if fallback == nil {
+				fallback = ch
+			}
+		}
+	}
+	return fallback
+}
+
+func matchPrefix(block *compiledHostBlock, path string, req *http.Request) (string, bool) {
+	if block.prefixBuckets == nil {
+		return "", false
+	}
+	lst := block.prefixBuckets[bucketKey(path)]
+	if len(lst) == 0 {
+		return "", false
+	}
+	for _, pr := range lst {
+		if strings.HasPrefix(path, pr.From) {
+			rest := path[len(pr.From):]
+			to := pr.To
+			if !strings.HasSuffix(to, "/") && rest != "" && !strings.HasPrefix(rest, "/") {
+				to += "/"
+			}
+			newPath := to + rest
+			return buildTarget(block.toHost, newPath, req), true
+		}
+	}
+	return "", false
+}
+
+func matchRegex(block *compiledHostBlock, path string, req *http.Request) (string, bool) {
+	if len(block.regexRules) == 0 {
+		return "", false
+	}
+	for _, rr := range block.regexRules {
+		if rr.re.MatchString(path) {
+			out := rr.re.ReplaceAllString(path, rr.to)
+			return buildTarget(block.toHost, out, req), true
+		}
+	}
+	return "", false
+}
+
+func doRedirect(w http.ResponseWriter, req *http.Request, target string, status int) error {
+	http.Redirect(w, req, target, status)
+	return nil
+}
+
+func buildTarget(toHost string, candidate string, req *http.Request) string {
+	if isAbsoluteURL(candidate) {
+		return candidate
+	}
+
+	if toHost == "" {
+		return candidate
+	}
+	p := candidate
+	if !strings.HasPrefix(p, "/") {
+		p = "/" + p
+	}
+	return schemeFromRequest(req) + "://" + toHost + p
+}
+
+func isAbsoluteURL(s string) bool {
+	return strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://")
+}
+
+func schemeFromRequest(req *http.Request) string {
+	if req.TLS == nil && strings.EqualFold(req.Header.Get("X-Forwarded-Proto"), "http") {
+		return "http"
+	}
+	return "https"
 }
 
 func bucketKey(s string) string {
