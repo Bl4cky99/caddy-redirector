@@ -104,7 +104,7 @@ FOUND:
 			target := to
 			if block.toHost != "" {
 				scheme := "https"
-				if req.TLS == nil && req.Header.Get("X-Forward-Proto") == "http" {
+				if req.TLS == nil && req.Header.Get("X-Forwarded-Proto") == "http" {
 					scheme = "http"
 				}
 
@@ -134,7 +134,7 @@ FOUND:
 					target := newPath
 					if block.toHost != "" && !strings.HasPrefix(newPath, "http://") && !strings.HasPrefix(newPath, "https://") {
 						scheme := "https"
-						if req.TLS == nil && req.Header.Get("X-Forward-Proto") == "http" {
+						if req.TLS == nil && req.Header.Get("X-Forwarded-Proto") == "http" {
 							scheme = "http"
 						}
 						target = scheme + "://" + block.toHost + newPath
@@ -155,7 +155,7 @@ FOUND:
 					if !strings.HasPrefix(out, "http://") && !strings.HasPrefix(out, "https://") {
 						if block.toHost != "" {
 							scheme := "https"
-							if req.TLS == nil && req.Header.Get("X-Forward-Proto") == "http" {
+							if req.TLS == nil && req.Header.Get("X-Forwarded-Proto") == "http" {
 								scheme = "http"
 							}
 
