@@ -477,7 +477,7 @@ Each line shows:
 - `B/op`: bytes allocated per operation
 - `allocs/op`: number of allocations per operation
 
-Your results (Linux, amd64, i7-9700K):
+Benchmark Results (Plattform: Linux, amd64, i7-9700K):
 ```plain
 goos: linux
 goarch: amd64
@@ -487,7 +487,7 @@ cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
 BenchmarkExact_Hit_1e3-8 ~475 ns/op 192 B/op 3 allocs/op
 BenchmarkExact_Miss_1e3-8 ~30 ns/op 0 B/op 0 allocs/op
 
-BenchmarkPrefix_Longest_Hit_1e3-8 ~25,100 ns/op 2336 B/op 4 allocs/op
+BenchmarkPrefix_Longest_Hit_1e3-8 ~5,900 ns/op 2336 B/op 4 allocs/op
 BenchmarkPrefix_Miss_1e3-8 ~918 ns/op 0 B/op 0 allocs/op
 
 BenchmarkRegex_Hit_1e2-8 ~1,140 ns/op 336 B/op 9 allocs/op

@@ -65,9 +65,11 @@ func (r *Redirector) Provision(caddy.Context) error {
 			ch.regexRules = append(ch.regexRules, compiledRegexRule{re: re, to: rr.To})
 		}
 
-		sort.Slice(ch.prefixRules, func(i, j int) bool {
-			return len(ch.prefixRules[i].From) > len(ch.prefixRules[i].To)
-		})
+		if len(ch.prefixRules) > 1 {
+			sort.SliceStable(ch.prefixRules, func(i, j int) bool {
+				return len(ch.prefixRules[i].From) > len(ch.prefixRules[j].To)
+			})
+		}
 
 		compiled = append(compiled, ch)
 	}
