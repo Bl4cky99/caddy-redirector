@@ -1,0 +1,158 @@
+name: "🐛 Bug report"
+description: Report a reproducible problem with caddy-redirector
+title: "[bug] <short summary>"
+labels: ["bug", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug!  
+        Please make sure you've searched existing issues and read the README first.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checklist
+      options:
+        - label: I searched existing issues and didn’t find a match.
+          required: true
+        - label: I’m using the latest released version (or current main).
+          required: true
+        - label: I read the README (installation, configuration, benchmarks).
+          required: true
+
+  - type: input
+    id: module-version
+    attributes:
+      label: Module version
+      description: Git tag (e.g., v1.0.0) or commit SHA
+      placeholder: v1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: caddy-version
+    attributes:
+      label: Caddy version
+      description: Output of `caddy version`
+      placeholder: v2.10.x
+    validations:
+      required: true
+
+  - type: input
+    id: go-version
+    attributes:
+      label: Go version
+      description: Output of `go version` (if relevant)
+      placeholder: go1.25.x
+    validations:
+      required: false
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Docker
+        - Kubernetes
+        - Other / mixed
+    validations:
+      required: true
+
+  - type: input
+    id: os-distro
+    attributes:
+      label: OS / Distribution
+      placeholder: "e.g., Debian 12, Ubuntu 22.04, Alpine 3.19"
+    validations:
+      required: false
+
+  - type: input
+    id: arch
+    attributes:
+      label: CPU architecture
+      placeholder: amd64 / arm64 / other
+    validations:
+      required: false
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear, concise description of the behavior; include observed vs. expected.
+      placeholder: Describe the problem clearly.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro-steps
+    attributes:
+      label: Steps to reproduce
+      description: Minimal, deterministic steps (links to public repros welcome).
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Minimal Caddyfile or config
+      description: Provide the smallest possible config that reproduces the issue.
+      render: shell
+      placeholder: |
+        :8080
+        route {
+          redirector {
+            status 308
+            host example.com {
+              to_host new.example.com
+              exact /old /new
+            }
+          }
+        }
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Include any error messages and how Caddy was started (command/flags/systemd).
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: severity
+    attributes:
+      label: Impact
+      options:
+        - label: Blocks production traffic
+        - label: Performance regression
+        - label: Functional bug
+        - label: Minor / cosmetic
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Links, screenshots, notes, etc.
+    validations:
+      required: false
