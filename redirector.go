@@ -36,10 +36,9 @@ func (r *Redirector) Provision(caddy.Context) error {
 	compiled = make([]compiledHostBlock, 0, len(r.Hosts))
 	for _, hb := range r.Hosts {
 		ch := compiledHostBlock{
-			toHost:      hb.ToHost,
-			exactPaths:  hb.Exact,
-			status:      hb.Status,
-			prefixRules: hb.Prefix,
+			toHost:     hb.ToHost,
+			exactPaths: hb.Exact,
+			status:     hb.Status,
 		}
 
 		p := strings.ToLower(strings.TrimSpace(hb.Pattern))
@@ -65,10 +64,18 @@ func (r *Redirector) Provision(caddy.Context) error {
 			ch.regexRules = append(ch.regexRules, compiledRegexRule{re: re, to: rr.To})
 		}
 
-		if len(ch.prefixRules) > 1 {
-			sort.SliceStable(ch.prefixRules, func(i, j int) bool {
-				return len(ch.prefixRules[i].From) > len(ch.prefixRules[j].To)
-			})
+		if len(hb.Prefix) > 0 {
+			ch.prefixBuckets = make(map[string][]PrefixRule, len(hb.Prefix))
+			for _, pr := range hb.Prefix {
+				k := bucketKey(pr.From)
+				ch.prefixBuckets[k] = append(ch.prefixBuckets[k], pr)
+			}
+
+			for k := range ch.prefixBuckets {
+				sort.SliceStable(ch.prefixBuckets[k], func(i, j int) bool {
+					return len(ch.prefixBuckets[k][i].From) > len(ch.prefixBuckets[k][j].From)
+				})
+			}
 		}
 
 		compiled = append(compiled, ch)
@@ -123,27 +130,28 @@ FOUND:
 			return nil
 		}
 
-		if len(block.prefixRules) > 0 {
-			for _, pr := range block.prefixRules {
-				if strings.HasPrefix(path, pr.From) {
-					rest := strings.TrimPrefix(path, pr.From)
-					to := pr.To
-					if !strings.HasSuffix(to, "/") && rest != "" && !strings.HasPrefix(rest, "/") {
-						to += "/"
-					}
-					newPath := to + rest
-
-					target := newPath
-					if block.toHost != "" && !strings.HasPrefix(newPath, "http://") && !strings.HasPrefix(newPath, "https://") {
-						scheme := "https"
-						if req.TLS == nil && req.Header.Get("X-Forwarded-Proto") == "http" {
-							scheme = "http"
+		if block.prefixBuckets != nil {
+			bk := bucketKey(path)
+			if lst := block.prefixBuckets[bk]; len(lst) > 0 {
+				for _, pr := range lst {
+					if strings.HasPrefix(path, pr.From) {
+						rest := path[len(pr.From):]
+						to := pr.To
+						if !strings.HasSuffix(to, "/") && rest != "" && !strings.HasPrefix(rest, "/") {
+							to += "/"
 						}
-						target = scheme + "://" + block.toHost + newPath
+						newPath := to + rest
+						target := newPath
+						if block.toHost != "" && !strings.HasPrefix(newPath, "http://") && !strings.HasPrefix(newPath, "https://") {
+							scheme := "https"
+							if req.TLS == nil && strings.EqualFold(req.Header.Get("X-Forwarded-Proto"), "http") {
+								scheme = "http"
+							}
+							target = scheme + "://" + block.toHost + newPath
+						}
+						http.Redirect(w, req, target, block.status)
+						return nil
 					}
-
-					http.Redirect(w, req, target, block.status)
-					return nil
 				}
 			}
 		}
@@ -179,4 +187,18 @@ FOUND:
 	}
 
 	return next.ServeHTTP(w, req)
+}
+
+func bucketKey(s string) string {
+	if len(s) < 2 || s[0] != '/' {
+		return ""
+	}
+	s = s[1:]
+	if i := strings.IndexByte(s, '/'); i >= 0 {
+		s = s[:i]
+	}
+	if len(s) > 8 {
+		s = s[:8]
+	}
+	return s
 }

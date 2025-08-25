@@ -30,14 +30,14 @@ type RegexRule struct {
 }
 
 type compiledHostBlock struct {
-	matchAll    bool
-	suffix      string
-	exactHost   string
-	toHost      string
-	status      int
-	exactPaths  map[string]string
-	prefixRules []PrefixRule
-	regexRules  []compiledRegexRule
+	matchAll      bool
+	suffix        string
+	exactHost     string
+	toHost        string
+	status        int
+	exactPaths    map[string]string
+	prefixBuckets map[string][]PrefixRule
+	regexRules    []compiledRegexRule
 }
 
 type compiledRegexRule struct {
