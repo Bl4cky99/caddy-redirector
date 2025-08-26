@@ -447,7 +447,6 @@ curl -i -H 'Host: accounts.example' http://localhost:8080/u/42
 
 - Rule-level status and query preservation flags.
 - Optional query passthrough and path templating beyond `$1`.
-- Benchmark suite and micro-optimizations for very large redirect tables.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -484,7 +483,14 @@ Project layout:
 ├─ parse_caddyfile.go    # Caddyfile parsing (UnmarshalCaddyfile), directive registration
 ├─ parse_config.go       # Config parsing for external redirect rule files (json, yaml, toml)
 ├─ redirector.go         # module wiring, Provision/Validate/ServeHTTP, core logic
-├─ bench_test.go         # simple benchmark test for different redirect methods
+├─ tests
+├   ├─ configs                # config files for tests
+├   ├─ bench_test.go          # benchmark test
+├   ├─ factory.go             # factory for reuseable test environment
+├   ├─ integration_test.go    # smoke integration test
+├   ├─ unit_test.go           # unit tests for default (and some edge) cases
+├   └─ util.go                # some utility for tests
+├
 └─ go.mod
 ```
 
