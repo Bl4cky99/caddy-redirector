@@ -29,40 +29,37 @@
   <li><a href="#installation">Installation</a>
     <ul>
       <li><a href="#install-build">Build a Caddy binary with this module (recommended)</a></li>
-      <li><a href="#install-docker">Docker (optional)</a></li>
       <li><a href="#install-binary-prebuild">Caddy binary (prebuild)</a></li>
-      <li><a href="#install-docker-prebuild">Docker (prebuild)</a></li>
+      <li><a href="#install-docker">Docker (build yourself)</a></li>
+      <li><a href="#install-docker-prebuild">Docker (prebuild image)</a></li>
     </ul>
   </li>
-  <li><a href="#configuration">Configuration (Caddyfile)</a>
+  <li><a href="#configuration">Configuration</a>
     <ul>
       <li><a href="#host-patterns">Host patterns</a></li>
       <li><a href="#rule-types">Rule types</a></li>
       <li><a href="#targets">Targets</a></li>
       <li><a href="#status-codes">Status code resolution</a></li>
       <li><a href="#precedence">Precedence</a></li>
+      <li><a href="#configuration-formats">Alternative formats (YAML / JSON / TOML)</a></li>
     </ul>
   </li>
-  <li><a href="#configuration-yaml--json--toml">Configuration (yaml, json, toml)</a></li>
-  <li><a href="#examples">Examples</a>
-    <ul>
-      <li><a href="#ex-migrate-exact">Migrate one host to another, lots of exact paths</a></li>
-      <li><a href="#ex-prefix">Prefix move with longest-prefix selection</a></li>
-      <li><a href="#ex-regex">Regex with captures + absolute target</a></li>
-      <li><a href="#ex-wildcard">Wildcard host and catch-all</a></li>
-    </ul>
-  </li>
+  <li><a href="#examples">Examples</a></li>
   <li><a href="#quick-testing">Quick testing</a></li>
   <li><a href="#troubleshooting">Troubleshooting</a></li>
-  <li><a href="#architecture">Architecture (developer view)</a></li>
-  <li><a href="#benchmarks">Benchmarks</a></li>
-  <li><a href="#extending">Extending the module (ideas)</a></li>
   <li><a href="#compatibility">Compatibility</a></li>
   <li><a href="#security-notes">Security notes</a></li>
-  <li><a href="#license">License</a></li>
   <li><a href="#roadmap">Roadmap</a></li>
   <li><a href="#faq">FAQ</a></li>
-  <li><a href="#minimal-dev-loop">Minimal dev loop</a></li>
+  <li><a href="#developer-documentation">Developer Documentation</a>
+    <ul>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#benchmarks">Benchmarks</a></li>
+      <li><a href="#extending">Extending</a></li>
+      <li><a href="#minimal-dev-loop">Minimal dev loop</a></li>
+    </ul>
+  </li>
+  <li><a href="#license">License</a></li>
 </ol>
 </details>
 
@@ -273,11 +270,8 @@ redirector {
 3. `regex` rules (first match wins)  
 4. No match → pass to the next handler
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
----
-
-## <span id="configuration-formats">Configuration (YAML / JSON / TOML)</span>
+### <span id="configuration-formats">Alternative formats (YAML / JSON / TOML)</span>
 
 In addition to the [Caddyfile configuration](#configuration), rules can also be defined in structured formats:
 
@@ -285,16 +279,13 @@ In addition to the [Caddyfile configuration](#configuration), rules can also be 
 - **JSON** ([example/rules.json](example/rules.json))  
 - **TOML** ([example/rules.toml](example/rules.toml))  
 
-The behavior is identical to the Caddyfile variant – only the format differs.  
-This allows redirect rules to be managed outside of the Caddyfile if preferred.
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
 ## <span id="examples">Examples</span>
 
-### <span id="ex-migrate-exact">1) Migrate one host to another, lots of exact paths</span>
+- **Exact migration** 
 
 ```caddy
 :8080
@@ -316,7 +307,9 @@ route {
 `curl -i -H 'Host: old.example' http://localhost:8080/docs`  
 → `308 Location: https://new.example/documentation`
 
-### <span id="ex-prefix">2) Prefix move with longest-prefix selection</span>
+---
+
+- **Prefix with longest-prefix**  
 
 ```caddy
 :8080
@@ -334,7 +327,9 @@ route {
 
 `/blog/2024/…` goes to `/archive/2024/…` because the longer prefix wins.
 
-### <span id="ex-regex">3) Regex with captures + absolute target</span>
+---
+
+- **Regex with captures**  
 
 ```caddy
 :8080
@@ -349,7 +344,9 @@ route {
 }
 ```
 
-### <span id="ex-wildcard">4) Wildcard host and catch-all</span>
+---
+
+- **Wildcard host and catch-all**
 
 ```caddy
 :8080
@@ -424,7 +421,59 @@ curl -i -H 'Host: accounts.example' http://localhost:8080/u/42
 
 ---
 
-## <span id="architecture">Architecture (developer view)</span>
+## <span id="compatibility">Compatibility</span>
+
+- Go: 1.25+
+- Caddy: v2 (build with `xcaddy`)
+- Regex engine: Go RE2 (no backtracking)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## <span id="security-notes">Security notes</span>
+
+- Be careful with wide regexes that can redirect a large portion of your site; keep exact/prefix rules for common paths.
+- Avoid user-controlled rule inputs; store redirects in your config or vetted data files.
+- Absolute targets (`http://…`) will downgrade scheme on purpose—use only if you intend that.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+
+## <span id="roadmap">Roadmap</span>
+
+- Rule-level status and query preservation flags.
+- Optional query passthrough and path templating beyond `$1`.
+- Benchmark suite and micro-optimizations for very large redirect tables.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## <span id="faq">FAQ</span>
+
+**Q: Does `*.example.com` match `example.com`?**  
+A: No. Add a separate `host example.com` block for the apex.
+
+**Q: Do query strings get forwarded?**  
+A: Not by default in the current version. This can be added per rule/host later.
+
+**Q: How do I choose 301, 307 and 308?**  
+A: Use `status 301`, `status 307` or `status 308` at the global level or inside a host block.  
+`308` keeps the HTTP method and is often the safer default for permanent moves.
+
+**Q: Can I use absolute URLs in rules?**  
+A: Yes. If the target starts with `http://` or `https://`, it is used verbatim and `to_host` is ignored for that rule.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## <span id="developer-documentation">Developer Documentation</span>
+
+### <span id="architecture">Architecture (developer view)</span>
 
 Project layout:
 
@@ -464,11 +513,11 @@ Reload behavior:
 
 ---
 
-## <span id="benchmarks">Benchmarks</span>
+### <span id="benchmarks">Benchmarks</span>
 
 This section documents the micro-benchmarks used to characterize the matching cost of the module’s three rule types (**exact**, **prefix**, **regex**) and to validate the expected time complexity.
 
-### What is measured?
+**What is measured?**
 
 - The benchmarks run entirely **in-process** (no network) using `ServeHTTP` against synthetic requests.
 - Rule sets are generated in-memory:
@@ -477,7 +526,9 @@ This section documents the micro-benchmarks used to characterize the matching co
   - `Regex_Hit/Miss`: 100 compiled regex rules
 - Each test uses a minimal `http.ResponseWriter` and a no-op `next` handler to reduce measurement noise.
 
-### How to run locally
+---
+
+**How to run locally**
 
 > File: `bench_test.go`
 
@@ -492,7 +543,9 @@ go test -run '^$' -bench . -benchmem -count=5 > bench.txt
 GOMAXPROCS=1 go test -run '^$' -bench . -benchmem
 ```
 
-### Interpreting the output
+---
+
+**Interpreting the output**
 
 Each line shows:
 - `ns/op`: average nanoseconds per request processed
@@ -516,6 +569,8 @@ BenchmarkRegex_Hit_1e2-8 ~1,140 ns/op 336 B/op 9 allocs/op
 BenchmarkRegex_Miss_1e2-8 ~3,100 ns/op 0 B/op 0 allocs/op
 ```
 
+---
+
 **What these numbers mean:**
 
 - **Exact (map lookup)**
@@ -530,17 +585,11 @@ BenchmarkRegex_Miss_1e2-8 ~3,100 ns/op 0 B/op 0 allocs/op
   - *Hit*: ~1.14 µs, ~336 B / 9 allocs — includes `ReplaceAllString` with captures and building the Location header. Complexity **O(R)** for the number of regex rules.
   - *Miss*: ~3.1 µs, zero allocations — time reflects checking each compiled regex and failing to match (**O(R)**).
 
-> **Complexity at a glance**
->
-> - Exact: **O(1)** hit & miss  
-> - Prefix: **O(P)** (number of prefix rules)  
-> - Regex: **O(R)** (number of regex rules)
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## <span id="extending">Extending the module (ideas)</span>
+### <span id="extending">Extending the module (ideas)</span>
 
 - **Query handling**: `preserve_query on|off` at rule or host level; or `append_query key=value`.
 - **Metrics/logging**: counters per rule, structured logs with rule IDs.
@@ -551,21 +600,18 @@ BenchmarkRegex_Miss_1e2-8 ~3,100 ns/op 0 B/op 0 allocs/op
 
 ---
 
-## <span id="compatibility">Compatibility</span>
+## <span id="minimal-dev-loop">Minimal dev loop</span>
 
-- Go: 1.25+
-- Caddy: v2 (build with `xcaddy`)
-- Regex engine: Go RE2 (no backtracking)
+```
+# 1) Build a local Caddy with your working copy
+xcaddy build --with github.com/Bl4cky99/caddy-redirector=.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+# 2) Run with your Caddyfile
+./caddy run --config Caddyfile --adapter caddyfile
 
----
-
-## <span id="security-notes">Security notes</span>
-
-- Be careful with wide regexes that can redirect a large portion of your site; keep exact/prefix rules for common paths.
-- Avoid user-controlled rule inputs; store redirects in your config or vetted data files.
-- Absolute targets (`http://…`) will downgrade scheme on purpose—use only if you intend that.
+# 3) Test
+curl -i -H 'Host: old.example' http://localhost:8080/old
+```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -585,53 +631,6 @@ This project is licensed under the **MIT License**.
 
 **Third-party software**
 This repository contains only the module’s source. When building Caddy with this module, you must also comply with the licenses of Caddy and any other included modules/dependencies in your final binary or container image.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## <span id="roadmap">Roadmap</span>
-
-- Rule-level status and query preservation flags.
-- Import rules from file(s).
-- Optional query passthrough and path templating beyond `$1`.
-- Benchmark suite and micro-optimizations for very large redirect tables.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## <span id="faq">FAQ</span>
-
-**Q: Does `*.example.com` match `example.com`?**  
-A: No. Add a separate `host example.com` block for the apex.
-
-**Q: Do query strings get forwarded?**  
-A: Not by default in the current version. This can be added per rule/host later.
-
-**Q: How do I choose 301, 307 and 308?**  
-A: Use `status 301`, `status 307` or `status 308` at the global level or inside a host block.  
-`308` keeps the HTTP method and is often the safer default for permanent moves.
-
-**Q: Can I use absolute URLs in rules?**  
-A: Yes. If the target starts with `http://` or `https://`, it is used verbatim and `to_host` is ignored for that rule.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## <span id="minimal-dev-loop">Minimal dev loop</span>
-
-```
-# 1) Build a local Caddy with your working copy
-xcaddy build --with github.com/Bl4cky99/caddy-redirector=.
-
-# 2) Run with your Caddyfile
-./caddy run --config Caddyfile --adapter caddyfile
-
-# 3) Test
-curl -i -H 'Host: old.example' http://localhost:8080/old
-```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
