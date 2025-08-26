@@ -1,0 +1,5 @@
+hosts:
+  - pattern: badregex.example
+    regex:
+      - pattern: "(" 
+        to: "/x"

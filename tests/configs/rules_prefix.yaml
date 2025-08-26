@@ -1,0 +1,6 @@
+hosts:
+  - pattern: prefix.example
+    to_host: success.example
+    prefix:
+      - { from: "/a/long/", to: "/b/long/" }
+      - { from: "/a/",      to: "/b/" }

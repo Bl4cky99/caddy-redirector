@@ -1,0 +1,14 @@
+hosts:
+  - pattern: special.prec.example
+    to_host: success.example
+    exact:
+      /e: /x
+
+  - pattern: "*.prec.example"
+    to_host: wildcard.example
+    prefix:
+      - { from: "/e", to: "/w" }
+
+  - pattern: "*"
+    exact:
+      /ping: /health

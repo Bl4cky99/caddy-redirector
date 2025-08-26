@@ -1,0 +1,5 @@
+hosts:
+  - pattern: scheme.example
+    to_host: success.example
+    exact:
+      /h: /h

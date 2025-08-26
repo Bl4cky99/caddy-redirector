@@ -54,6 +54,7 @@
   <li><a href="#developer-documentation">Developer Documentation</a>
     <ul>
       <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#tests">Tests</a></li>
       <li><a href="#benchmarks">Benchmarks</a></li>
       <li><a href="#extending">Extending</a></li>
       <li><a href="#minimal-dev-loop">Minimal dev loop</a></li>
@@ -508,6 +509,33 @@ Performance & complexity:
 Reload behavior:
 
 - Caddy will call `Provision` on each reload; regexes are recompiled, prefix lists resorted, old state is discarded.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+### <span id="tests">Tests</span>
+
+This repository ships a self-contained test suite under `tests/` (package `e2e`).  
+It exercises the handler directly (no external Caddy process) and uses dedicated rule files under `tests/configs/`.
+
+**Layout**
+- `tests/redirector_test.go` – core unit tests (exact/prefix/regex, host precedence, merging, scheme inference).
+- `tests/configs/` – rule files (JSON/YAML/TOML) used by the suite.
+
+> **Note:** The module currently keeps a package-global compiled state. Do **not** use `t.Parallel()`; tests run serially by design.
+
+```bash
+go test -v -race -cover ./tests
+```
+
+**Test assets**
+All rule files consumed by the suite live in `tests/configs/`:
+- `rules_exact.json`, `rules_prefix.yaml`, `rules_regex.toml`, `rules_wildcards.yaml`
+- `merge_a.json`, `merge_b.json` (merge order/last-wins)
+- `scheme.yaml` (scheme inference)
+- `bad_regex.yaml`, `unknown.data`, `noext`, `regex_no_slash.json`, `absolute_exact.yaml`, `case.json` (edge/error cases)
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

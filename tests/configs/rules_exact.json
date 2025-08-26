@@ -1,0 +1,12 @@
+{
+    "hosts": [
+        {
+            "pattern": "exact.example",
+            "status": 301,
+            "to_host": "success.example",
+            "exact": {
+                "/old": "/new"
+            }
+        }
+    ]
+}

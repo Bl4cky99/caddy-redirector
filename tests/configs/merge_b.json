@@ -1,0 +1,17 @@
+{
+    "hosts": [
+        {
+            "pattern": "merge.example",
+            "status": 301,
+            "exact": {
+                "/x": "/z"
+            },
+            "prefix": [
+                {
+                    "from": "/a/",
+                    "to": "/b/"
+                }
+            ]
+        }
+    ]
+}

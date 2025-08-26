@@ -1,0 +1,5 @@
+hosts:
+  - pattern: abs.example
+    to_host: success.example
+    exact:
+      /foo: "https://absolute.example/foo"

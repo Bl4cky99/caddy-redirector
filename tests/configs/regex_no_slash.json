@@ -1,0 +1,14 @@
+{
+    "hosts": [
+        {
+            "pattern": "noslash.example",
+            "to_host": "success.example",
+            "regex": [
+                {
+                    "pattern": "^/u/([0-9]+)$",
+                    "to": "users/$1"
+                }
+            ]
+        }
+    ]
+}

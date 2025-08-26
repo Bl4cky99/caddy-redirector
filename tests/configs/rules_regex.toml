@@ -1,0 +1,11 @@
+[[hosts]]
+pattern = "regex.example"
+to_host = "success.example"
+
+[[hosts.regex]]
+pattern = "^/u/([0-9]+)$"
+to      = "/users/$1"
+
+[[hosts.regex]]
+pattern = "^/abs/(.*)$"
+to      = "https://absolute.example/$1"

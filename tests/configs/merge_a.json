@@ -1,0 +1,11 @@
+{
+    "hosts": [
+        {
+            "pattern": "merge.example",
+            "to_host": "a.example",
+            "exact": {
+                "/x": "/y"
+            }
+        }
+    ]
+}
