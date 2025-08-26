@@ -558,17 +558,17 @@ This section documents the micro-benchmarks used to characterize the matching co
 
 **How to run locally**
 
-> File: `bench_test.go`
+> File: `tests/bench_test.go`
 
 ```
 #### Run all benchmarks with memory stats
-go test -run '^$' -bench . -benchmem
+go test -run '^$' -bench . -benchmem ./tests
 
 #### Get more stable numbers (5 repetitions)
-go test -run '^$' -bench . -benchmem -count=5 > bench.txt
+go test -run '^$' -bench . -benchmem -count=5 ./tests > bench.txt
 
 #### (Optional) Pin to a single OS thread for reproducibility
-GOMAXPROCS=1 go test -run '^$' -bench . -benchmem
+GOMAXPROCS=1 go test -run '^$' -bench . -benchmem ./tests
 ```
 
 ---
@@ -587,14 +587,14 @@ goarch: amd64
 pkg: github.com/Bl4cky99/caddy-redirector
 cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
 
-BenchmarkExact_Hit_1e3-8 ~475 ns/op 192 B/op 3 allocs/op
-BenchmarkExact_Miss_1e3-8 ~30 ns/op 0 B/op 0 allocs/op
+BenchmarkExact_Hit_1e3-8 ~1500 ns/op 1292 B/op 14 allocs/op
+BenchmarkExact_Miss_1e3-8 ~145 ns/op 160 B/op 3 allocs/op
 
-BenchmarkPrefix_Longest_Hit_1e3-8 ~5,900 ns/op 2336 B/op 4 allocs/op
-BenchmarkPrefix_Miss_1e3-8 ~918 ns/op 0 B/op 0 allocs/op
+BenchmarkPrefix_Longest_Hit_1e3-8 ~8,000 ns/op 5638 B/op 15 allocs/op
+BenchmarkPrefix_Miss_1e3-8 ~145 ns/op 160 B/op 3 allocs/op
 
-BenchmarkRegex_Hit_1e2-8 ~1,140 ns/op 336 B/op 9 allocs/op
-BenchmarkRegex_Miss_1e2-8 ~3,100 ns/op 0 B/op 0 allocs/op
+BenchmarkRegex_Hit_1e2-8 ~2,400 ns/op 1474 B/op 20 allocs/op
+BenchmarkRegex_Miss_1e2-8 ~3,700 ns/op 162 B/op 3 allocs/op
 ```
 
 ---

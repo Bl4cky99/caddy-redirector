@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Jason Giese (Bl4cky99)
 
+//go:build unit
+
 package e2e
 
 import (
