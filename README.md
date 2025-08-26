@@ -520,13 +520,18 @@ This repository ships a self-contained test suite under `tests/` (package `e2e`)
 It exercises the handler directly (no external Caddy process) and uses dedicated rule files under `tests/configs/`.
 
 **Layout**
-- `tests/redirector_test.go` – core unit tests (exact/prefix/regex, host precedence, merging, scheme inference).
+- `tests/unit_test.go` – core unit tests (exact/prefix/regex, host precedence, merging, scheme inference).
+- `tests/integration_test.go` - integration test using build caddy binary (must be present in repo)
 - `tests/configs/` – rule files (JSON/YAML/TOML) used by the suite.
 
 > **Note:** The module currently keeps a package-global compiled state. Do **not** use `t.Parallel()`; tests run serially by design.
 
 ```bash
-go test -v -race -cover ./tests
+# Unit tests
+go test -v -race -cover -tags=unit ./tests
+
+# Integration test
+go test -v -tags=integration ./tests
 ```
 
 **Test assets**

@@ -1,0 +1,16 @@
+:8080
+
+route {
+	respond /health "ok"
+
+	redirector {
+		status 308
+
+		host test.example {
+			to_host success.example
+			exact  /x /y
+			prefix /old/ /new/
+			regex  ^/u/([0-9]+)$ /users/$1
+		}
+	}
+}
