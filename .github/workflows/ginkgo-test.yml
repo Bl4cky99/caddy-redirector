@@ -1,0 +1,12 @@
+name: Ginkgo Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    uses: Bl4cky99/ginkgo-format-action/.github/workflows/ginkgo.yml@v1.0.2
+    with:
+      packages: ./internal/...
+      title: "Test Results: internal"

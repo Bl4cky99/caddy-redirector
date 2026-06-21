@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Jason Giese (Bl4cky99)
 
-package e2e
+package redirector_test
 
 import (
 	"crypto/tls"
@@ -10,24 +10,22 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"testing"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
-func ProjectRoot(t *testing.T) string {
-	t.Helper()
-
+func ProjectRoot() string {
 	_, file, _, ok := runtime.Caller(0)
 	if !ok {
-		t.Fatal("cannot determin caller path")
+		Fail("cannot determine caller path")
 	}
-
-	testDir := filepath.Dir(file)
-	return filepath.Clean(filepath.Join(testDir, ".."))
+	// file is .../internal/redirector/util_test.go — go up two levels to reach module root
+	return filepath.Clean(filepath.Join(filepath.Dir(file), "../.."))
 }
 
-func ConfigPath(t *testing.T, rel string) string {
-	t.Helper()
-	return filepath.Join(ProjectRoot(t), "tests", rel)
+func ConfigPath(rel string) string {
+	return filepath.Join(ProjectRoot(), "tests", rel)
 }
 
 type RequestSpec struct {
@@ -53,15 +51,12 @@ func (r *RequestSpec) Build() *http.Request {
 			}
 		}
 	}
-
 	if r.ForwardProto != "" {
 		req.Header.Set("X-Forwarded-Proto", r.ForwardProto)
 	}
-
 	if r.UseTLS {
 		req.TLS = &tls.ConnectionState{}
 	}
-
 	if strings.EqualFold(r.ForwardProto, "http") {
 		req.Header.Set("X-Forwarded-Proto", "http")
 	}
@@ -110,22 +105,14 @@ func (NextCapture) ServeHTTP(w http.ResponseWriter, _ *http.Request) error {
 	return nil
 }
 
-func AssertRedirect(t *testing.T, resp *Response, wantStatus int, wantLoc string) {
-	t.Helper()
-	if resp.Status() != wantStatus {
-		t.Fatalf("status mismatch: got=%d want=%d", resp.Status(), wantStatus)
-	}
-	if got := resp.Location(); got != wantLoc {
-		t.Fatalf("location mismatch: got=%q want=%q", got, wantLoc)
-	}
+func AssertRedirect(resp *Response, wantStatus int, wantLoc string) {
+	GinkgoHelper()
+	Expect(resp.Status()).To(Equal(wantStatus), "status mismatch")
+	Expect(resp.Location()).To(Equal(wantLoc), "location mismatch")
 }
 
-func AssertPassedThrough(t *testing.T, resp *Response, wantStatus int) {
-	t.Helper()
-	if resp.Header("X-Next") != "hit" {
-		t.Fatalf("expected request to pass to next handler")
-	}
-	if resp.Status() != wantStatus {
-		t.Fatalf("unexpected next status: got=%d want=%d", resp.Status(), wantStatus)
-	}
+func AssertPassedThrough(resp *Response, wantStatus int) {
+	GinkgoHelper()
+	Expect(resp.Header("X-Next")).To(Equal("hit"), "expected request to pass to next handler")
+	Expect(resp.Status()).To(Equal(wantStatus), "unexpected next status")
 }

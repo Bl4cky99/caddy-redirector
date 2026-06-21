@@ -483,14 +483,16 @@ Project layout:
 ├─ parse_caddyfile.go    # Caddyfile parsing (UnmarshalCaddyfile), directive registration
 ├─ parse_config.go       # Config parsing for external redirect rule files (json, yaml, toml)
 ├─ redirector.go         # module wiring, Provision/Validate/ServeHTTP, core logic
+├─ internal
+│   └─ redirector
+│       ├─ suite_test.go        # Ginkgo suite bootstrap
+│       ├─ unit_test.go         # unit specs (exact/prefix/regex, host precedence, merging, scheme inference)
+│       ├─ integration_test.go  # smoke integration test (requires caddy binary, build tag: integration)
+│       ├─ bench_test.go        # benchmarks (build tag: bench)
+│       ├─ factory_test.go      # factory for reusable test environment
+│       └─ util_test.go         # shared types and Gomega assertion helpers
 ├─ tests
-├   ├─ configs                # config files for tests
-├   ├─ bench_test.go          # benchmark test
-├   ├─ factory.go             # factory for reuseable test environment
-├   ├─ integration_test.go    # smoke integration test
-├   ├─ unit_test.go           # unit tests for default (and some edge) cases
-├   └─ util.go                # some utility for tests
-├
+│   └─ configs               # rule files (JSON/YAML/TOML) used by the test suite
 └─ go.mod
 ```
 
@@ -522,22 +524,25 @@ Reload behavior:
 
 ### <span id="tests">Tests</span>
 
-This repository ships a self-contained test suite under `tests/` (package `e2e`).  
-It exercises the handler directly (no external Caddy process) and uses dedicated rule files under `tests/configs/`.
+The test suite lives under `internal/redirector/` (package `redirector_test`) and is written with [Ginkgo v2](https://onsi.github.io/ginkgo/) and [Gomega](https://onsi.github.io/gomega/).  
+It exercises the handler directly (no external Caddy process) and reads rule files from `tests/configs/`.
 
 **Layout**
-- `tests/unit_test.go` – core unit tests (exact/prefix/regex, host precedence, merging, scheme inference).
-- `tests/integration_test.go` - integration test using build caddy binary (must be present in repo)
-- `tests/configs/` – rule files (JSON/YAML/TOML) used by the suite.
+- `internal/redirector/unit_test.go` – 24 Ginkgo specs covering exact/prefix/regex rules, host precedence, merging, scheme inference, error handling, and more.
+- `internal/redirector/integration_test.go` – smoke test that starts a real Caddy process (requires a caddy binary; skipped automatically if not found). Build tag: `integration`.
+- `tests/configs/` – rule files (JSON/YAML/TOML) consumed by the suite.
 
-> **Note:** The module currently keeps a package-global compiled state. Do **not** use `t.Parallel()`; tests run serially by design.
+**CI** runs automatically via the `ginkgo-test.yml` workflow on every push and pull request.
 
 ```bash
-# Unit tests
-go test -v -race -cover -tags=unit ./tests
+# Run the full unit suite locally
+go test ./internal/...
 
-# Integration test
-go test -v -tags=integration ./tests
+# With Ginkgo CLI for richer output
+ginkgo -v ./internal/...
+
+# Integration test (requires a caddy binary at repo root, in ./bin/, or on PATH)
+go test -tags=integration ./internal/...
 ```
 
 **Test assets**
@@ -569,17 +574,17 @@ This section documents the micro-benchmarks used to characterize the matching co
 
 **How to run locally**
 
-> File: `tests/bench_test.go`
+> File: `internal/redirector/bench_test.go`
 
 ```
 #### Run all benchmarks with memory stats
-go test -run '^$' -bench . -benchmem ./tests
+go test -run '^$' -bench . -benchmem -tags=bench ./internal/...
 
 #### Get more stable numbers (5 repetitions)
-go test -run '^$' -bench . -benchmem -count=5 ./tests > bench.txt
+go test -run '^$' -bench . -benchmem -tags=bench -count=5 ./internal/... > bench.txt
 
 #### (Optional) Pin to a single OS thread for reproducibility
-GOMAXPROCS=1 go test -run '^$' -bench . -benchmem ./tests
+GOMAXPROCS=1 go test -run '^$' -bench . -benchmem -tags=bench ./internal/...
 ```
 
 ---

@@ -3,7 +3,7 @@
 
 //go:build bench
 
-package e2e
+package redirector_test
 
 import (
 	"net/http"
@@ -45,7 +45,6 @@ func buildPrefixHost(n int, withToHost bool, code int) *redir.Redirector {
 	if withToHost {
 		hb.ToHost = "success.example"
 	}
-
 	for i := 0; i < n; i++ {
 		hb.Prefix = append(hb.Prefix, redir.PrefixRule{
 			From: "/p/" + strings.Repeat("x", i) + "/",
