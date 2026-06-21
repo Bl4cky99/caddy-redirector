@@ -374,10 +374,8 @@ route {
 
 ## <span id="quick-testing">Quick testing</span>
 
-Start Caddy:
-
 ```bash
-./caddy run --config Caddyfile --adapter caddyfile
+just run   # builds bin/caddy and starts it with example/Caddyfile
 ```
 
 Hit endpoints:
@@ -493,6 +491,7 @@ Project layout:
 │       └─ util_test.go         # shared types and Gomega assertion helpers
 ├─ tests
 │   └─ configs               # rule files (JSON/YAML/TOML) used by the test suite
+├─ Justfile                  # dev-task runner (build, test, bench, cover, fmt, …)
 └─ go.mod
 ```
 
@@ -535,14 +534,17 @@ It exercises the handler directly (no external Caddy process) and reads rule fil
 **CI** runs automatically via the `ginkgo-test.yml` workflow on every push and pull request.
 
 ```bash
-# Run the full unit suite locally
-go test ./internal/...
+just test              # unit suite (race detector, 2 min timeout)
+just test-verbose      # same with verbose Ginkgo output
+just test-integration  # builds a caddy binary first, then runs the integration test
+```
 
-# With Ginkgo CLI for richer output
+Or directly with `go` / `ginkgo`:
+
+```bash
+go test -race -timeout=2m ./internal/...
 ginkgo -v ./internal/...
-
-# Integration test (requires a caddy binary at repo root, in ./bin/, or on PATH)
-go test -tags=integration ./internal/...
+go test -race -tags=integration -timeout=30s ./internal/...
 ```
 
 **Test assets**
@@ -576,14 +578,20 @@ This section documents the micro-benchmarks used to characterize the matching co
 
 > File: `internal/redirector/bench_test.go`
 
+```bash
+just bench   # quick run with memory stats
 ```
-#### Run all benchmarks with memory stats
+
+Or directly:
+
+```bash
+# Run all benchmarks with memory stats
 go test -run '^$' -bench . -benchmem -tags=bench ./internal/...
 
-#### Get more stable numbers (5 repetitions)
+# Get more stable numbers (5 repetitions)
 go test -run '^$' -bench . -benchmem -tags=bench -count=5 ./internal/... > bench.txt
 
-#### (Optional) Pin to a single OS thread for reproducibility
+# (Optional) Pin to a single OS thread for reproducibility
 GOMAXPROCS=1 go test -run '^$' -bench . -benchmem -tags=bench ./internal/...
 ```
 
@@ -646,15 +654,33 @@ BenchmarkRegex_Miss_1e2-8 ~3,700 ns/op 162 B/op 3 allocs/op
 
 ## <span id="minimal-dev-loop">Minimal dev loop</span>
 
+The repo ships a [`Justfile`](./Justfile) that wraps all common tasks. Install [just](https://github.com/casey/just) once, then:
+
+```bash
+just           # list all available recipes
+just build     # xcaddy build --with .=. → bin/caddy
+just run       # build + caddy run --config example/Caddyfile
+just test      # unit suite (race, 2 min timeout)
+just test-integration  # build + integration test
+just cover     # coverage summary in terminal
+just cover-html        # HTML report → bin/coverage.html
+just fmt       # go fmt + goimports
+just vet       # go vet
+just tidy      # go mod tidy
+just clean     # remove bin/ and coverage.out
 ```
-# 1) Build a local Caddy with your working copy
-xcaddy build --with github.com/Bl4cky99/caddy-redirector=.
 
-# 2) Run with your Caddyfile
-./caddy run --config Caddyfile --adapter caddyfile
+Hit endpoints after `just run`:
 
-# 3) Test
-curl -i -H 'Host: old.example' http://localhost:8080/old
+```bash
+# Exact
+curl -i -H 'Host: old.example' http://localhost:8080/docs
+
+# Prefix
+curl -i -H 'Host: app.example' http://localhost:8080/blog/2024/post
+
+# Regex
+curl -i -H 'Host: accounts.example' http://localhost:8080/u/42
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
