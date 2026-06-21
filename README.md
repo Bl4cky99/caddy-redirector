@@ -691,7 +691,7 @@ curl -i -H 'Host: accounts.example' http://localhost:8080/u/42
 
 This project is licensed under the **MIT License**.
 
-- Copyright © 2025 [Jason Giese (Bl4cky99)](https://github.com/Bl4cky99)
+- Copyright © 2025-2026 [Jason Giese (Bl4cky99)](https://github.com/Bl4cky99)
 - See the full text in [LICENSE](./LICENSE).
 
 **Notes for users and integrators**
